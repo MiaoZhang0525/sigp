@@ -31,3 +31,10 @@ Standardizing the data ...
 Classifying with SIGP ...
 F1 score:0.86667
 ```
+### Fitting the Kernel Parameters using Cross-Validation
+
+In Matlab:
+```matlab
+res = trainKernel(X,y,1,5);
+```
+X,y are the regression covariate matrix and response. The other parameters specify a rank-1 SIGP and 5 CV paritions to use.
