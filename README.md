@@ -37,4 +37,4 @@ In Matlab:
 ```matlab
 res = trainKernel(X,y,1,5);
 ```
-X,y are the regression covariate matrix and response. The other parameters specify a rank-1 SIGP and 5 CV paritions to use.
+X,y are the regression feature matrix and response. The other parameters specify a rank-1 SIGP and 5 CV paritions to use.
