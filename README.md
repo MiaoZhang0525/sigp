@@ -1,6 +1,8 @@
 # sigp
 Subspace-Induced Gaussian Processes
 
+Data and code for the paper "Subspace-Induced Gaussian Processes".
+
 ## Example: Classification on ARCENE dataset
 
 ```matlab
