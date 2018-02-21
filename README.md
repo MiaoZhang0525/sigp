@@ -4,7 +4,7 @@ Subspace-Induced Gaussian Processes
 ## Example: classification on ARCENE dataset
 
 In Matlab:
-```matlab
+```
 >> Example
 Loading the data ...
 Standardizing the data ...
