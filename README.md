@@ -1,7 +1,7 @@
 # sigp
 Subspace-Induced Gaussian Processes
 
-## Example: classification on ARCENE dataset
+## Example: Classification on ARCENE dataset
 
 ```matlab
 disp("Loading the data ...");
