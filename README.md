@@ -1,7 +1,20 @@
 # sigp
 Subspace-Induced Gaussian Processes
 
-Data and code for the paper "Subspace-Induced Gaussian Processes".
+Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv.org/pdf/1802.07528.pdf
+
+If you like this project, consider citing the paper using the following BibTex entry:
+```
+@article{Tan18,
+  author    = {Zilong Tan and
+               Sayan Mukherjee},
+  title     = {{Subspace-Induced Gaussian Processes}},
+  journal   = {CoRR},
+  volume    = {abs/1802.07528},
+  year      = {2018}
+  url = {https://arxiv.org/pdf/1802.07528.pdf}
+}
+```
 
 ## Example: Classification on ARCENE dataset
 
