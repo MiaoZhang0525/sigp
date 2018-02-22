@@ -6,8 +6,7 @@ Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv
 If you like this project, consider citing the paper using the following BibTex entry:
 ```
 @article{Tan18,
-  author    = {Zilong Tan and
-               Sayan Mukherjee},
+  author    = {Zilong Tan and Sayan Mukherjee},
   title     = {{Subspace-Induced Gaussian Processes}},
   journal   = {CoRR},
   volume    = {abs/1802.07528},
