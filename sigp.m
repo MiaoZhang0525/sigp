@@ -24,6 +24,7 @@ function hyp = sigp(X,y,m,varargin)
 %    hyp.mf is the fitted mean function mf: X -> Y
 %    hyp.nlp is a vector of negative log likelihood
 %
+% For more details, see: https://arxiv.org/pdf/1802.07528.pdf
 % Copyright (c) 2018 Zilong Tan (ztan@cs.duke.edu)
 
 hyp = struct();
@@ -124,7 +125,6 @@ for i = 1:opt.MaxIter
         break;
     end
     Sv = inv(PTP/s2 + iSb);
-    %beta = Sv*P'*err/s2;
     beta = Sb*P'*V*err;
     % Fit function variance
     Sb = beta*beta' + Sv;
