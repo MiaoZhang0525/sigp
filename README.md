@@ -3,6 +3,11 @@ Subspace-Induced Gaussian Processes
 
 Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv.org/pdf/1802.07528.pdf
 
+## Why using SIGP?
+
+![alt text](https://github.com/ZilongTan/sigp/blob/master/Example2.jpg "GP vs SIGP Comparison")
+
+
 If you like this project, consider citing the paper using the following BibTex entry:
 ```
 @article{Tan18,
@@ -45,6 +50,7 @@ Standardizing the data ...
 Classifying with SIGP ...
 F1 score:0.86667
 ```
+
 ### Fitting the Kernel Parameters using Cross-Validation
 One way to select the kernel is to use the cross-validation. The example script trainKernel.m performs cross-validation and Baysian optimization for this task. First, edit the the range of the kernel parameters in the script, and then
 
