@@ -10,7 +10,7 @@ Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv
 ![alt text](https://github.com/ZilongTan/sigp/blob/master/Example2.jpg "GP vs SIGP Comparison")
 
 To generate the figure, run Example2.m in Matlab (you will need the [GPML Toolkit](http://www.gaussianprocess.org/gpml/code/matlab/doc/index.html)).
-This figure compares the predictive distribution given by the Gaussian Process (GP) and Subspace-Induced Gaussian Process (SIGP) using the training data points show as squares. The rows correspond respectively to noise variance 1e-1, 1e-3, and 1e-6. The blue regions are the 2-sigma confidence intervals. As can be seen, SIGP better recovers the uncertainty in the real data distribution.
+This figure compares the predictive distribution given by the Gaussian Process (GP) and Subspace-Induced Gaussian Process (SIGP) using the training data points show as squares. The rows correspond respectively to noise variance 1e-1, 1e-3, and 1e-6. The blue regions are the 2-sigma confidence intervals. As can be seen, SIGP better recovers the uncertainty of the real data distribution.
 
 If you like this project, consider citing the paper using the following BibTex entry:
 ```
