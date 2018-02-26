@@ -46,9 +46,11 @@ Classifying with SIGP ...
 F1 score:0.86667
 ```
 ### Fitting the Kernel Parameters using Cross-Validation
+One way to select the kernel is to use the cross-validation. The example script trainKernel.m performs cross-validation and Baysian optimization for this task. First, edit the the range of the kernel parameters in the script, and then
 
 In Matlab:
 ```matlab
 res = trainKernel(X,y,1,5);
 ```
-X,y are the regression feature matrix and response. The other parameters specify a rank-1 SIGP and 5 CV paritions to use.
+X,y are the regression feature matrix and response. The other parameters specify a rank-1 SIGP and 5 CV paritions to use. 
+The kernel parameters can also be learned using the marginal likelihood.
