@@ -12,7 +12,6 @@ function hyp = sigp(X,y,m,varargin)
 %    ns  is the maximum number of slices, each slice corresponds to a range of y.
 %        For classification, a slice contains one or more classes
 %    eta is small postive number used to improve the condition of A
-%    tau is used for linear mean function with p > n
 %    lambda is the mean function regularization parameter
 %    efn specifies the error function, 'lin' - linear, 'ker' - kernel Ridge
 %    kfn gives the kernel function, default is RBF
@@ -24,7 +23,6 @@ function hyp = sigp(X,y,m,varargin)
 %    hyp.mf is the fitted mean function mf: X -> Y
 %    hyp.nlp is a vector of negative log likelihood
 %
-% For more details, see: https://arxiv.org/pdf/1802.07528.pdf
 % Copyright (c) 2018 Zilong Tan (ztan@cs.duke.edu)
 
 hyp = struct();
@@ -36,7 +34,6 @@ opt.addParameter( 'MaxIter', 50, @(x) floor(x) > 0 );
 opt.addParameter( 'tol', 1e-4, @(x) floor(x) >= 0);
 opt.addParameter( 'ns', max(m+1,floor(n/10)), @(x) floor(x) > 0 & floor(x) < n/2);
 opt.addParameter( 'eta', 1e-8, @(x) floor(x) >= 0);
-opt.addParameter( 'tau', 1e-8, @(x) floor(x) >= 0);
 opt.addParameter( 'lambda', 1e-2, @(x) floor(x) >= 0);
 opt.addParameter( 'efn', 'ker', @(x) strcmp(x,'lin')|strcmp(x,'ker'));
 opt.addParameter( 'kfn', @(varargin) sigp_rbf(varargin{:}), @(x) x());
@@ -119,7 +116,7 @@ for i = 1:opt.MaxIter
            beta'*iSb*beta + sum((res/sqrt(s2)).^2))/2/n;
     hyp.nlp = [hyp.nlp; nlp];
     % Fit mean function
-    alp = efn(V,opt.lambda,opt.tau);
+    alp = efn(V,opt.lambda);
     err = efn(alp);
     if length(hyp.nlp) > 1 && hyp.nlp(end-1) - hyp.nlp(end) < opt.tol
         break;
@@ -171,7 +168,7 @@ pvar = sum((KZ*CF).^2,2) + s2;
 end
 
 % Linear mean function
-function val = sigp_efn_lin(y,X,V,lambda,tau)
+function val = sigp_efn_lin(y,X,V,lambda)
 if nargin < 3, val = 'p+1'; return, end
 if nargin == 3, val = y - X*V(2:end) - V(1); return, end
 n = size(X,1);
@@ -181,8 +178,10 @@ ss = sum(sum(V));
 VL = V - rs'/ss*rs;
 if p > n
     % Dual estimator
-    VL(1:n+1:end) = VL(1:n+1:end) + tau;
-    val = X'*((X*X'+lambda*inv(VL))\y);
+    XTVL = X'*VL;
+    KVL = X*XTVL;
+    KVL(1:n+1:end) = KVL(1:n+1:end) + lambda;
+    val = XTVL/KVL*y;
 else
     CVL = X'*VL*X;
     CVL(1:p+1:end) = CVL(1:p+1:end) + lambda;
@@ -192,7 +191,7 @@ val = [rs/ss*(y-X*val);val];
 end
 
 % Kernel Ridge mean function
-function val = sigp_efn_ker(y,K,V,lambda,tau)
+function val = sigp_efn_ker(y,K,V,lambda)
 if nargin < 3, val = 'n+1'; return, end
 if nargin == 3, val = y - K*V(2:end) - V(1); return, end
 n = size(K,1);
