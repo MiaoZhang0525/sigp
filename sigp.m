@@ -36,7 +36,7 @@ opt.addParameter( 'ns', max(m+1,floor(n/10)), @(x) floor(x) > 0 & floor(x) < n/2
 opt.addParameter( 'eta', 1e-8, @(x) floor(x) >= 0);
 opt.addParameter( 'lambda', 1e-2, @(x) floor(x) >= 0);
 opt.addParameter( 'efn', 'ker', @(x) strcmp(x,'lin')|strcmp(x,'ker'));
-opt.addParameter( 'kfn', @(varargin) sigp_rbf(varargin{:}), @(x) x());
+opt.addParameter( 'kfn', @sigp_rbf, @(x) x());
 opt.addParameter( 'kparam', 1, @(x) true);
 opt.addParameter( 'SDR', true, @(x) islogical(x));
 opt.parse(varargin{:});
@@ -123,8 +123,9 @@ for i = 1:opt.MaxIter
     end
     Sv = inv(PTP/s2 + iSb);
     beta = Sb*P'*V*err;
-    % Fit function variance
-    Sb = beta*beta' + Sv;
+    % Fit function variance. For full variance estimation, use Sb =
+    % beta*beta' + Sv; Here we assume Sb is diagonal
+    Sb  = diag(diag(Sv) + beta.^2);
     iSb = inv(Sb);
     res = err - P*beta;
     % Fit W and noise variance
@@ -133,8 +134,8 @@ end
 
 hyp.alpha = alp;
 hyp.beta  = beta;
-hyp.Q  = W*sqrtm(Sb);
-hyp.SigmaNoise = s2;
+hyp.Q = W*sqrtm(Sb);
+hyp.NoiseVar = s2;
 
 MF = W*beta;
 CF = W*sqrtm(Sv);
