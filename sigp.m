@@ -23,12 +23,6 @@ function hyp = sigp(X,y,m,varargin)
 %    hyp.mf is the fitted mean function mf: X -> Y
 %    hyp.nlp is a vector of negative log likelihood
 %
-% Updates:
-%    06/25/2018 - Added polynomial and periodic kernels:
-%       sigp_poly: k(x,z) = (c+x'*z)^d, params = [c,d];
-%       sigp_lin : k(x,z) = x'*z/b^2, params = [b];
-%       sigp_per : k(x,z) = exp(-sin(pi*(x-z)/w)^2/b^2), params = [w,b];
-%
 % Copyright (c) 2018 Zilong Tan (ztan@cs.duke.edu)
 
 hyp = struct();
@@ -38,7 +32,7 @@ opt = inputParser;
 opt.addParameter( 'MaxIter', 50, @(x) floor(x) > 0 );
 opt.addParameter( 'tol', 1e-4, @(x) floor(x) >= 0);
 opt.addParameter( 'ns', max(m+1,floor(n/10)), @(x) floor(x) > 0 & floor(x) < n/2);
-opt.addParameter( 'eta', 1e-6, @(x) floor(x) >= 0);
+opt.addParameter( 'eta', 1e-11, @(x) floor(x) >= 0);
 opt.addParameter( 'lambda', 1e-5, @(x) floor(x) >= 0);
 opt.addParameter( 'efn', 'ker', @(x) strcmp(x,'lin')|strcmp(x,'ker'));
 opt.addParameter( 'kfn', @sigp_rbf, @(x) feval(x,[]));
@@ -93,8 +87,7 @@ A = A'*A;  A(1:n+1:end) = A(1:n+1:end) + opt.eta;
 
 if opt.SDR
     % Initialize W with the SDR basis
-    [W,~,~] = svd(A\C);
-    W = W(:,1:m);
+    [W,~,~] = eigs(C,A,m);
 else
     % Initialize W randomly
     W = randn(n,m);

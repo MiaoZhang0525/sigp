@@ -1,5 +1,5 @@
 xs = (-5:0.01:5)'; ns = size(xs,1); keps = [2;1;0.5]; % complete data
-xt = (-5:0.09:5)'; nt = size(xt,1); % a subset of data point for training\
+xt = (-5:0.08:5)'; nt = size(xt,1); % a subset of data point for training\
 fillcol = [0.530000 0.810000 0.980000];
 
 ne = length(keps);
@@ -37,7 +37,7 @@ for i = 1:ne
     ylabel('y');
 
     subplot(ne,3,3+3*(i-1));
-    hyp = sigp(xt,ft,10,'kparam',3.4818,'efn','lin','lambda',0.063403);
+    hyp = sigp(xt,ft,1,'kparam',4.3841,'efn','lin','lambda',0.89497);
     [yp,ys2] = hyp.f(xs);
     ciplot(yp-2*sqrt(ys2),yp+2*sqrt(ys2),xs,fillcol);
     ylim([-8,8]);
