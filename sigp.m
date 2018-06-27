@@ -23,20 +23,25 @@ function hyp = sigp(X,y,m,varargin)
 %    hyp.mf is the fitted mean function mf: X -> Y
 %    hyp.nlp is a vector of negative log likelihood
 %
+% Updates:
+%    06/25/2018 - Added polynomial and periodic kernels:
+%       sigp_poly: k(x,z) = (c+x'*z)^d, params = [c,d];
+%       sigp_lin : k(x,z) = x'*z/b^2, params = [b];
+%       sigp_per : k(x,z) = exp(-sin(pi*(x-z)/w)^2/b^2), params = [w,b];
+%
 % Copyright (c) 2018 Zilong Tan (ztan@cs.duke.edu)
 
 hyp = struct();
 n = size(X,1);
-p = size(X,2);
 
 opt = inputParser;
 opt.addParameter( 'MaxIter', 50, @(x) floor(x) > 0 );
 opt.addParameter( 'tol', 1e-4, @(x) floor(x) >= 0);
 opt.addParameter( 'ns', max(m+1,floor(n/10)), @(x) floor(x) > 0 & floor(x) < n/2);
-opt.addParameter( 'eta', 1e-8, @(x) floor(x) >= 0);
-opt.addParameter( 'lambda', 1e-2, @(x) floor(x) >= 0);
+opt.addParameter( 'eta', 1e-6, @(x) floor(x) >= 0);
+opt.addParameter( 'lambda', 1e-5, @(x) floor(x) >= 0);
 opt.addParameter( 'efn', 'ker', @(x) strcmp(x,'lin')|strcmp(x,'ker'));
-opt.addParameter( 'kfn', @sigp_rbf, @(x) x());
+opt.addParameter( 'kfn', @sigp_rbf, @(x) feval(x,[]));
 opt.addParameter( 'kparam', 1, @(x) true);
 opt.addParameter( 'SDR', true, @(x) islogical(x));
 opt.parse(varargin{:});
@@ -74,7 +79,8 @@ else
     end
 end
 
-K = opt.kfn(X,[],opt.kparam);
+kfn = @(X,Z,param) feval(opt.kfn,X,Z,param);
+K = kfn(X,[],opt.kparam);
 % Compute SDR matrices
 A = zeros(n,n);
 pos = cumsum([1;csz]);
@@ -87,9 +93,8 @@ A = A'*A;  A(1:n+1:end) = A(1:n+1:end) + opt.eta;
 
 if opt.SDR
     % Initialize W with the SDR basis
-    [W,D] = eig(C,A);
-    [~,idx] = sort(diag(D),'descend');
-    W = W(:,idx(1:m));
+    [W,~,~] = svd(A\C);
+    W = W(:,1:m);
 else
     % Initialize W randomly
     W = randn(n,m);
@@ -141,20 +146,20 @@ MF = W*beta;
 CF = W*sqrtm(Sv);
 
 if strcmp(opt.efn,'ker')
-    hyp.f = @(Z) sigp_pred_ker(opt.kfn(Z-hyp.Xmu,X,opt.kparam), ...
+    hyp.f = @(Z) sigp_pred_ker(kfn(Z-hyp.Xmu,X,opt.kparam), ...
             @(KZ) -sigp_efn_ker(zeros(size(Z,1),1),KZ,alp), ...
             MF,CF,s2);
     hyp.mf = @(Z)-sigp_efn_ker(zeros(size(Z,1),1),...
-             opt.kfn(Z-hyp.Xmu,X,opt.kparam),alp);
+             kfn(Z-hyp.Xmu,X,opt.kparam),alp);
 else
-    hyp.f = @(Z) sigp_pred_lin(opt.kfn(Z-hyp.Xmu,X,opt.kparam), ...
+    hyp.f = @(Z) sigp_pred_lin(kfn(Z-hyp.Xmu,X,opt.kparam), ...
             -sigp_efn_lin(zeros(size(Z,1),1),Z-hyp.Xmu,alp), ...
             MF,CF,s2);
     hyp.mf = @(Z)-sigp_efn_lin(zeros(size(Z,1),1),...
              Z-hyp.Xmu,alp);
 end
 
-hyp.kfn = @(Z) opt.kfn(Z-hyp.Xmu,X,opt.kparam);
+hyp.kfn = @(Z) kfn(Z-hyp.Xmu,X,opt.kparam);
 
 end
 
@@ -220,18 +225,52 @@ S = svd(X);
 val = sum(log(S));
 end
 
-function K = sigp_rbf(X,Z,band)
-if nargin < 1, K = 1; return, end
-if nargin > 2
-    X = X/band;
-    if ~isempty(Z), Z = Z/band; end
+function K = sigp_poly(X,Z,param)
+if nargin == 0 || isempty(X), K = 2; return, end
+if nargin == 3 && isempty(Z), Z = X; end
+K = (param(1) + X*Z').^param(2); % param(2) must be a positive integer
 end
-if nargin < 2 || isempty(Z), Z = X; end
 
+function K = sigp_lin(X,Z,band)
+if nargin == 0 || isempty(X), K = 1; return, end
+if nargin == 3
+    X = X/band;
+    if ~isempty(Z)
+        Z = Z/band;
+    else
+        Z = X;
+    end
+end
+K = X*Z';
+end
+
+% only applies to 1D X and Z
+function K = sigp_per(X,Z,param)
+if nargin == 0 || isempty(X), K = 2; return, end
+if nargin == 3
+    X = X*(pi/param(1));
+    if ~isempty(Z)
+        Z = Z*(pi/param(1));
+    else
+        Z = X;
+    end
+end
+K = exp(-sin(X-Z').^2/param(2)^2);
+end
+
+function K = sigp_rbf(X,Z,band)
+if nargin == 0 || isempty(X), K = 1; return, end
+if nargin == 3
+    X = X/band;
+    if ~isempty(Z)
+        Z = Z/band;
+    else
+        Z = X;
+    end
+end
 sqX = -sum(X.^2,2);
 sqZ = -sum(Z.^2,2);
 K = bsxfun(@plus, sqX, (2*X)*Z');
 K = bsxfun(@plus, sqZ', K);
 K = exp(K);
-
 end

@@ -12,7 +12,7 @@ res = bayesopt(minfn,[lambda,band],'IsObjectiveDeterministic',true,...
 end
 
 function loss = objfn(k,X,y,m,lambda,band)
-c = cvpartition(y,'kFold',k);
+c = cvpartition(length(y),'kFold',k);
 fun = @(xT,yT,xt,yt) crossnlp(xT,yT,xt,yt,m,lambda,band);
 nlp = crossval(fun,X,y,'partition',c);
 nlp = nlp(:);
