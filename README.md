@@ -3,8 +3,6 @@ Subspace-Induced Gaussian Processes - A dual Gaussian Process regression model o
 
 Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv.org/pdf/1802.07528.pdf
 
-![alt text](https://github.com/ZilongTan/sigp/blob/master/Example2.jpg "GP vs SIGP Comparison")
-
 ## Example: Classification on ARCENE dataset
 
 ```matlab
