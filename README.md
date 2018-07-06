@@ -44,5 +44,5 @@ In Matlab:
 ```matlab
 res = trainMS(X,y,10,5);
 ```
-X,y are the regression feature matrix and response. The other parameters specify a rank-1 SIGP and 5 CV paritions to use. 
+X,y are the regression feature matrix and response. The other parameters specify a rank-10 SIGP and 5 CV paritions to use. 
 The kernel parameters can also be learned using the marginal likelihood.
