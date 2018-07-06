@@ -1,5 +1,5 @@
 # sigp
-Subspace-Induced Gaussian Processes - A dual Gaussian Process regression model over functions in the reproducing kernel Hilbert space. 
+Subspace-Induced Gaussian Processes - Gaussian processes induced by sufficient dimension reduction subspaces of the reproducing kernel Hilbert space.
 
 Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv.org/pdf/1802.07528.pdf
 
