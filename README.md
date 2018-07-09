@@ -1,9 +1,10 @@
-# sigp
+# SIGP
 Subspace-Induced Gaussian Processes - Gaussian processes induced by sufficient dimension reduction subspaces of the reproducing kernel Hilbert space.
 
-Data and code for our paper "Subspace-Induced Gaussian Processes": https://arxiv.org/pdf/1802.07528.pdf
+## Example:
+![Classification of 2D points. Four classes represented by different colors, and the decision boundary contours are shown.](comp.jpg)
 
-## Example: Classification on ARCENE dataset
+## Example: Classification of the ARCENE data
 
 ```matlab
 disp("Loading the data ...");
@@ -20,11 +21,10 @@ feaTest = fea(101:end,:);
 
 disp("Classifying with SIGP ...");
 
-hyp = sigp(feaTrain,gndTrain,1,'efn','ker',...
-            'meankfn','sigp_rbf','meankpar',0.039312,...
-            'covkfn','sigp_sinc','covkpar', 18.506,...
-            'lambda',488.66,...
-            'normalize',false);
+hyp = sigp(feaTrain,gndTrain,3,'efn','ker',...
+            'meankfn','sigp_rbf','meankpar',0.0011397,...
+            'covkfn','sigp_rbf','covkpar',207.33,...
+            'lambda',518.12,'normalize',false);
 
 disp("F1 score:" + num2str(F1score(sign(hyp.f(feaTest)),gndTest)));
 ```
@@ -46,3 +46,7 @@ res = trainMS(X,y,10,5);
 ```
 X,y are the regression feature matrix and response. The other parameters specify a rank-10 SIGP and 5 CV paritions to use. 
 The kernel parameters can also be learned using the marginal likelihood.
+
+### Details
+If you use SIGP in your applications, kindly consider citing the paper "Subspace-Induced Gaussian Processes": https://arxiv.org/pdf/1802.07528.pdf
+
