@@ -1,8 +1,13 @@
 # SIGP
 Subspace-Induced Gaussian Processes - Gaussian processes induced by sufficient dimension reduction subspaces of the reproducing kernel Hilbert space.
 
-## Example:
-![Classification of 2D points. Four classes represented by different colors, and the decision boundary contours are shown.](comp.jpg)
+## Comparing SIGP to standard Gaussian process regression
+1. SIGP is computationally faster due to the low-rank of the covariance
+2. SIGP is robust against overfitting (illustrated by the following example)
+
+![Comparison of GP and SIGP](comp.jpg)
+
+This figure illustrates the classification of 2D points using the standard Gaussian process regression (GP) and SIGP. There are four classes represented by different colors, and the decision boundary contours are shown. The contours of GP and SIGP successfully separate the four classes; however, GP tends to fit the data more tightly and hence has higher risk of overfitting. The SIGP with a higher rank covariance generally yields an increased margin between classes.
 
 ## Example: Classification of the ARCENE data
 
