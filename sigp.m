@@ -28,8 +28,8 @@ hyp = struct();
 [n,p] = size(X);
 
 opt = inputParser;
-opt.addParameter( 'maxiter', 30, @(x) floor(x) > 0 );
-opt.addParameter( 'tol', 1e-4, @(x) floor(x) >= 0);
+opt.addParameter( 'maxiter', 50, @(x) floor(x) > 0 );
+opt.addParameter( 'tol', 1e-5, @(x) floor(x) >= 0);
 opt.addParameter( 'ns', 0, @(x) floor(x) > 1 & floor(x) <= n/2); % 1 for auto select
 opt.addParameter( 'eta', 1e-11, @(x) floor(x) >= 0);
 opt.addParameter( 'lambda', 1e-5, @(x) floor(x) >= 0);
@@ -149,9 +149,7 @@ for i = 1:opt.maxiter
     end
     Sv = inv(PTP/s2 + iSb);
     beta = Sb*P'*V*err;
-    % Fit function variance. For full variance estimation, use Sb =
-    % beta*beta' + Sv; Here we assume Sb is diagonal
-    Sb  = diag(diag(Sv) + beta.^2);
+    Sb  = beta*beta' + Sv;
     iSb = inv(Sb);
     res = err - P*beta;
     % Fit the noise variance
@@ -337,7 +335,7 @@ end
 K = exp(-sqrt(pairwise_sqerr(X,Z)));
 end
 
-% Matern v=3/2 kernel, also the Laplace kernel
+% Matern v=3/2 kernel
 function K = sigp_matern32(X,Z,band)
 if nargin == 0 || isempty(X), K = 1; return, end
 if nargin == 3
@@ -355,14 +353,5 @@ end
 % Student-t kernel
 function K = sigp_stud(X,Z,band)
 if nargin == 0 || isempty(X), K = 1; return, end
-if nargin == 3
-    X = X/band^2;
-    if ~isempty(Z)
-        Z = Z/band^2;
-    else
-        Z = X;
-    end
-end
-SE = sqrt(pairwise_sqerr(X,Z));
-K = 1./(1+SE);
+K = sigp_rq(X,Z,[1 band]);
 end
