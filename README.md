@@ -2,12 +2,9 @@
 Subspace-Induced Gaussian Processes - Gaussian processes induced by sufficient dimension reduction subspaces of the reproducing kernel Hilbert space.
 
 ## Comparison of SIGP and the standard Gaussian process
-1. SIGP is computationally faster due to the low-rank of the covariance
-2. SIGP is robust against overfitting (illustrated by the following example)
-
-![Comparison of GP and SIGP](comp.jpg)
-
-This figure illustrates the classification of 2D points using the standard Gaussian process regression (GP) and SIGP. There are four classes represented by different colors, and the decision boundary contours are shown. The contours of GP and SIGP successfully separate the four classes; however, GP tends to fit the data more tightly and hence has higher risk of overfitting. The SIGP with a higher rank covariance generally yields an increased margin between classes.
+1. SIGP can express strictly a superset of functions realizable by GP for a fixed kernel
+2. SIGP is computationally faster due to the low-rank of the covariance
+3. SIGP is robust against overfitting (illustrated by the following example)
 
 ## Example: Classification of the ARCENE data
 
@@ -26,10 +23,10 @@ feaTest = fea(101:end,:);
 
 disp("Classifying with SIGP ...");
 
-hyp = sigp(feaTrain,gndTrain,3,'efn','ker',...
-            'meankfn','sigp_rbf','meankpar',0.0011397,...
-            'covkfn','sigp_rbf','covkpar',207.33,...
-            'lambda',518.12,'normalize',false);
+hyp = sigp(feaTrain,gndTrain,1,'efn','lin',...
+    'meankfn','sigp_lin','meankpar',[],...
+    'covkfn', 'sigp_rbf','covkpar',0.017152,...
+    'lambda',0.25265,'normalize',false);
 
 disp("F1 score:" + num2str(F1score(sign(hyp.f(feaTest)),gndTest)));
 ```
@@ -39,17 +36,17 @@ In Matlab:
 >> Example
 Loading the data ...
 Classifying with SIGP ...
-F1 score:0.85714
+F1 score:0.84783
 ```
 
 ### Fitting the Kernel Parameters using Cross-Validation
-One way to select the kernel is to use the cross-validation. The example scripts trainLR.m, trainMS.m, and trainRT.m combine cross-validation and Baysian optimization for this task:
+One way to select the kernel is to use the cross-validation. The example script trainLR.m combines cross-validation and Baysian optimization for this task:
 
 In Matlab:
 ```matlab
-res = trainMS(X,y,10,5);
+res = trainLR(X,y,1,3);
 ```
-X,y are the regression feature matrix and response. The other parameters specify a rank-10 SIGP and 5 CV paritions to use. 
+X,y are the regression feature matrix and response. The other parameters specify a rank-1 SIGP and 3 CV paritions to use. 
 The kernel parameters can also be learned using the marginal likelihood.
 
 ### Details
