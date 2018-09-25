@@ -2,7 +2,7 @@
 Subspace-Induced Gaussian Processes - Gaussian processes induced by sufficient dimension reduction subspaces of the reproducing kernel Hilbert space.
 
 ## Comparison of SIGP and the standard Gaussian process
-1. SIGP can express a superset of functions realizable by GP
+1. SIGP can express strictly a superset of functions realizable by GP for a fixed kernel
 2. SIGP is computationally faster due to the low-rank of the covariance
 3. SIGP is robust against overfitting (illustrated by the following example)
 
