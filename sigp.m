@@ -102,10 +102,12 @@ if m > 0
         idx = pos(i):pos(i+1)-1;
         A(idx,:) = CK(idx,:) - mean(CK(idx,:));
     end
-    C = MK; C = C - mean(C); C = C'*C;
-    A = A'*A;  A(1:n+1:end) = A(1:n+1:end) + opt.eta;
-    [W,~] = eigs(C,A,m);
+    C = CK; C = C - mean(C); C = C*C';
+    A = A*A'; A(1:n+1:end) = A(1:n+1:end) + opt.eta;
+    hyp.A = A; hyp.C = C;
+    [W,E] = eigs(C,A,m);
     W = W./sqrt(sum(W.^2));
+    hyp.eigs = diag(E);
 else
     % use the full covariance kernel
     m = n;
@@ -159,7 +161,8 @@ end
 hyp.W = W;
 hyp.alpha = alp;
 hyp.beta  = beta;
-hyp.Q = W*sqrtm(Sb);
+hyp.Sb = Sb;
+hyp.Proj = P;
 hyp.NoiseVar = s2;
 
 MF = W*beta;
@@ -233,45 +236,10 @@ S = svd(X);
 val = sum(log(S));
 end
 
-function SE = pairwise_sqerr(X,Z)
-sqX = sum(X.^2,2);
-sqZ = sum(Z.^2,2);
-SE = bsxfun(@minus, sqX, (2*X)*Z');
-SE = bsxfun(@plus, sqZ', SE);
-SE = max(SE,0); % may be negative due to rounding errors
-end
-
-function K = sigp_poly(X,Z,param)
-if nargin == 0 || isempty(X), K = 2; return, end
-if nargin == 3
-    X = X/param(1);
-    if ~isempty(Z)
-        Z = Z/param(1);
-    else
-        Z = X;
-    end
-end
-K = (1 + X*Z').^param(2); % param(2) must be a positive integer
-end
-
 function K = sigp_lin(X,Z,param)
 if nargin == 0 || isempty(X), K = 0; return, end
 if nargin == 3 && isempty(Z), Z = X; end
 K = X*Z';
-end
-
-% only applies to 1D X and Z
-function K = sigp_per(X,Z,param)
-if nargin == 0 || isempty(X), K = 2; return, end
-if nargin == 3
-    X = X*(pi/param(1));
-    if ~isempty(Z)
-        Z = Z*(pi/param(1));
-    else
-        Z = X;
-    end
-end
-K = exp(-sin(X-Z').^2/param(2)^2);
 end
 
 function K = sigp_rbf(X,Z,band)
@@ -284,74 +252,9 @@ if nargin == 3
         Z = X;
     end
 end
-% basically -pairwise_sqerr(X,Z), negate vectors rather than the matrix
 sqX = -sum(X.^2,2);
 sqZ = -sum(Z.^2,2);
 K = bsxfun(@plus, sqX, (2*X)*Z');
 K = bsxfun(@plus, sqZ', K);
 K = exp(K);
-end
-
-% Rational quadratic kernel
-% k(x,z) = (1 + (x-z)'(x-z)/alpha/band^2)^(-alpha)
-function K = sigp_rq(X,Z,param)
-if nargin == 0 || isempty(X), K = 1; return, end
-if nargin == 3
-    X = X/sqrt(param(1))/param(2);
-    if ~isempty(Z)
-        Z = Z/sqrt(param(1))/param(2);
-    else
-        Z = X;
-    end
-end
-K = (1+pairwise_sqerr(X,Z)).^(-param(1));
-end
-
-
-function K = sigp_sinc(X,Z,band)
-if nargin == 0 || isempty(X), K = 1; return, end
-if nargin == 3
-    X = X/band^2;
-    if ~isempty(Z)
-        Z = Z/band^2;
-    else
-        Z = X;
-    end
-end
-K = sinc(sqrt(pairwise_sqerr(X,Z)));
-end
-
-% Matern v=1/2 kernel, also the Laplace kernel
-function K = sigp_matern12(X,Z,band)
-if nargin == 0 || isempty(X), K = 1; return, end
-if nargin == 3
-    X = X/band^2;
-    if ~isempty(Z)
-        Z = Z/band^2;
-    else
-        Z = X;
-    end
-end
-K = exp(-sqrt(pairwise_sqerr(X,Z)));
-end
-
-% Matern v=3/2 kernel
-function K = sigp_matern32(X,Z,band)
-if nargin == 0 || isempty(X), K = 1; return, end
-if nargin == 3
-    X = X/band^2;
-    if ~isempty(Z)
-        Z = Z/band^2;
-    else
-        Z = X;
-    end
-end
-SE = sqrt(pairwise_sqerr(X,Z));
-K = (1+SE).*exp(-SE);
-end
-
-% Student-t kernel
-function K = sigp_stud(X,Z,band)
-if nargin == 0 || isempty(X), K = 1; return, end
-K = sigp_rq(X,Z,[1 band]);
 end
