@@ -9,7 +9,7 @@ More details can be found in our paper: https://arxiv.org/abs/1802.07528
 3. SIGP is robust against overfitting
 
 ## Example 1: Predictive Distribution of SIGP
-![Predictive distribution](ex2.png "Example 2" | width=100)
+![Predictive distribution](ex2.png | width=100)
 
 ## Example 2: Classification of the ARCENE data
 
