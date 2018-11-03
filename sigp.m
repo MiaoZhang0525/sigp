@@ -150,7 +150,7 @@ for i = 1:opt.maxiter
         break;
     end
     Sv = inv(PTP/s2 + iSb);
-    beta = Sb*P'*V*err;
+    beta = Sv/s2*P'*err;
     Sb  = beta*beta' + Sv;
     iSb = inv(Sb);
     res = err - P*beta;
