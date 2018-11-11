@@ -13,7 +13,8 @@ function hyp = sigp(X,y,m,varargin)
 %        For classification, a slice contains one or more classes
 %    eta is small postive number used to improve the condition of A
 %    lambda is the mean function regularization parameter
-%    efn specifies the error function, 'lin' - linear, 'ker' - kernel Ridge
+%    efn specifies the error function, 
+%        'cov' - use covariance kernel, 'lin' - linear, 'ker' - kernel Ridge
 %    meankfn/covkfn give the mean and covariance kernel functions,
 %       default are linear and rational quadratic
 %
@@ -28,28 +29,29 @@ hyp = struct();
 [n,p] = size(X);
 
 opt = inputParser;
-opt.addParameter( 'maxiter', 50, @(x) floor(x) > 0 );
-opt.addParameter( 'tol', 1e-5, @(x) floor(x) >= 0);
-opt.addParameter( 'ns', 0, @(x) floor(x) > 1 & floor(x) <= n/2); % 1 for auto select
-opt.addParameter( 'eta', 1e-11, @(x) floor(x) >= 0);
-opt.addParameter( 'lambda', 1e-5, @(x) floor(x) >= 0);
-opt.addParameter( 'efn', 'ker', @(x) strcmp(x,'lin')|strcmp(x,'ker'));
+opt.addParameter( 'maxiter',  50,        @(x) floor(x) > 0 );
+opt.addParameter( 'tol',      1e-5,      @(x) floor(x) >= 0);
+opt.addParameter( 'ns',       0,         @(x) floor(x) > 1 & floor(x) <= n/2); % 1 for auto select
+opt.addParameter( 'eta',      1e-11,     @(x) floor(x) >= 0);
+opt.addParameter( 'lambda',   1e-5,      @(x) floor(x) >= 0);
+opt.addParameter( 'efn',      'cov',     @(x) strcmp(x,'lin')|strcmp(x,'ker')|strcmp(x,'cov'));
 opt.addParameter( 'meankfn',  @sigp_lin, @(x) feval(x) >= 0); % used only if opt.efn == 'ker'
 opt.addParameter( 'covkfn',   @sigp_rq,  @(x) feval(x) >= 0);
-opt.addParameter( 'meankpar', [], @(x) true);
-opt.addParameter( 'covkpar',  [1 1], @(x) true);
-opt.addParameter( 'showlik',  false, @(x) islogical(x));
-opt.addParameter( 'normalize',true,  @(x) islogical(x));
+opt.addParameter( 'meankpar', [],        @(x) true);
+opt.addParameter( 'covkpar',  [1 1],     @(x) true);
+opt.addParameter( 'showlik',  false,     @(x) islogical(x));
+opt.addParameter( 'normalize',true,      @(x) islogical(x));
 opt.parse(varargin{:});
 opt = opt.Results;    
 
 hyp.opt = opt;
 
 if strcmp(opt.efn,'lin')
-    use_ker_efn = false;
-    opt.meankfn = @sigp_lin; % override meankfn if using linear mean
+    use_ker_efn = 0;
+elseif strcmp(opt.efn,'cov')
+    use_ker_efn = 1; % mean function uses the kernel as covariance
 else
-    use_ker_efn = true;
+    use_ker_efn = 2; % for full kernel mean
 end
 
 % Center the data (do not normalize the variance)
@@ -89,9 +91,7 @@ else
     end
 end
 
-meankfn = @(X,Z,param) feval(opt.meankfn,X,Z,param);
 covkfn  = @(X,Z,param) feval(opt.covkfn,X,Z,param);
-MK = meankfn(X,[],opt.meankpar);
 CK = covkfn(X,[],opt.covkpar);
 
 if m > 0
@@ -100,24 +100,17 @@ if m > 0
     pos = cumsum([1;csz]);
     for i = 1:length(csz)
         idx = pos(i):pos(i+1)-1;
-        A(idx,:) = CK(idx,:) - mean(CK(idx,:));
+        A(:,idx) = CK(:,idx) - mean(CK(:,idx),2);
     end
-    C = CK; C = C - mean(C); C = C*C';
-    A = A*A'; A(1:n+1:end) = A(1:n+1:end) + opt.eta;
+    C = CK; C = C - mean(C,2); C = C*C'/n;
+    A = A*A'/n; A(1:n+1:end) = A(1:n+1:end) + opt.eta;
     hyp.A = A; hyp.C = C;
     [W,E] = eigs(C,A,m);
-    W = W./sqrt(sum(W.^2));
     hyp.eigs = diag(E);
 else
     % use the full covariance kernel
     m = n;
     W = eye(n);
-end
-
-if use_ker_efn
-    efn = @(varargin) sigp_efn_ker(y,MK,varargin{:});
-else
-    efn = @(varargin) sigp_efn_lin(y,X,varargin{:});
 end
 
 % Initialize other parameters
@@ -126,6 +119,15 @@ beta = zeros(m,1);
 err = y;  res = err;
 P = CK*W;  PTP = P'*P;
 hyp.nlp = [];
+
+if use_ker_efn == 1
+    efn = @(varargin) sigp_efn_cov(y,P,varargin{:});
+elseif use_ker_efn == 2
+    MK  = feval(opt.meankfn,X,[],opt.meankpar);
+    efn = @(varargin) sigp_efn_ker(y,MK,varargin{:});
+else
+    efn = @(varargin) sigp_efn_lin(y,X,varargin{:});
+end
 
 if opt.showlik
     figure;
@@ -169,12 +171,16 @@ MF = W*beta;
 CF = W*sqrtm(Sv);
 
 hyp.covkfn = @(Z) covkfn((Z-hyp.Xmu)./hyp.Xstd,X,opt.covkpar);
-if strcmp(opt.efn,'ker')
+if use_ker_efn == 1
+    hyp.mf = @(Z)-sigp_efn_cov(zeros(size(Z,1),1),...
+                covkfn((Z-hyp.Xmu)./hyp.Xstd,X,opt.covkpar)*W,alp);    
+elseif use_ker_efn == 2
     hyp.mf = @(Z)-sigp_efn_ker(zeros(size(Z,1),1),...
-                meankfn((Z-hyp.Xmu)./hyp.Xstd,X,opt.meankpar),alp);    
+                feval(opt.meankfn,(Z-hyp.Xmu)./hyp.Xstd,X,opt.meankpar),alp);    
 else
     hyp.mf = @(Z)-sigp_efn_lin(zeros(size(Z,1),1),(Z-hyp.Xmu)./hyp.Xstd,alp);    
 end
+
 hyp.f = @(Z) sigp_pred(hyp.covkfn(Z),hyp.mf(Z),MF,CF,s2);
 
 end
@@ -207,13 +213,24 @@ end
 val = [rs/ss*(y-X*val);val];
 end
 
+% Mean function based on covariance kernel
+function val = sigp_efn_cov(y,P,V,lambda)
+if nargin < 3, val = 'm+1'; return, end
+if nargin == 3, val = y - P*V(2:end) - V(1); return, end
+rs = sum(V);
+ss = sum(rs);
+PTVL= P'*V - P'*rs'/ss*rs;
+val = (PTVL*P)\(PTVL*y);
+val = [rs/ss*(y-P*val); val];
+end
+
 % Kernel Ridge mean function
 function val = sigp_efn_ker(y,K,V,lambda)
 if nargin < 3, val = 'n+1'; return, end
 if nargin == 3, val = y - K*V(2:end) - V(1); return, end
 n = size(K,1);
 rs = sum(V);
-ss = sum(sum(V));
+ss = sum(rs);
 VL = V - rs'/ss*rs;
 VLK = VL*K;
 VLK(1:n+1:end) = VLK(1:n+1:end) + lambda;
